@@ -90,8 +90,8 @@ if prompt := st.chat_input("Contoh: Tampilkan pelanggan dari Jakarta"):
             with st.spinner("📡 Menghubungi AI..."):
                 generated_sql = get_sql_from_ai(prompt, api_key)
                 
-                if "ERROR" in generated_sql:
-                    st.error("🚦 Limit API Google Habis. Silakan nyalakan **Mode Demo** di sidebar.")
+                if generated_sql.startswith("ERROR"):
+                    st.error(generated_sql)
                 elif "SELECT" not in generated_sql.upper():
                     st.markdown(generated_sql)
                     st.session_state.messages.append({"role": "assistant", "content": generated_sql})
