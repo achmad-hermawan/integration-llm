@@ -1,0 +1,64 @@
+/* assets/style.css */
+
+/* Background & Font Utama */
+.stApp {
+    background-color: #0E1117;
+    color: #FAFAFA;
+}
+
+/* Style Judul */
+h1 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    color: #4DA6FF;
+    text-align: center;
+    padding-bottom: 20px;
+    text-shadow: 0 0 10px rgba(77, 166, 255, 0.5);
+}
+
+/* Style Chat Bubbles */
+.stChatMessage {
+    background-color: #262730;
+    border-radius: 20px;
+    border: 1px solid #363945;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* User Bubble specific */
+div[data-testid="stChatMessage"]:nth-child(odd) {
+    background: linear-gradient(135deg, #2E3B55 0%, #1F2937 100%);
+    border-left: 5px solid #4DA6FF;
+}
+
+/* Assistant Bubble specific */
+div[data-testid="stChatMessage"]:nth-child(even) {
+    background: linear-gradient(135deg, #1E1E1E 0%, #2D2D2D 100%);
+    border-left: 5px solid #00D26A;
+}
+
+/* DataFrame Styling */
+div[data-testid="stDataFrame"] {
+    background-color: #1E1E1E;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: #161B22;
+    border-right: 1px solid #30363D;
+}
+
+/* Button Styling */
+.stButton>button {
+    background-color: #238636;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    width: 100%;
+}
+.stButton>button:hover {
+    background-color: #2ea043;
+}
