@@ -1,110 +1,79 @@
 import streamlit as st
-import time
-
-# --- IMPORT MODULE BUATAN SENDIRI ---
+from modules.config import APP_TITLE
+from modules.llm import get_sql_from_llama
 from modules.database import run_query
-from modules.llm import get_sql_from_ai
-from modules.utils import load_css, get_demo_response
+from modules.utils import load_css # Pastikan file utils.py ada (lihat step sebelumnya)
 
-# 1. KONFIGURASI HALAMAN
-st.set_page_config(
-    page_title="Nexus Data Assistant",
-    page_icon="🔮",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# 1. Setup Halaman
+st.set_page_config(page_title="Nexus Secure", page_icon="🛡️", layout="wide")
 
-# 2. LOAD DESAIN DARI FILE TERPISAH
-load_css("assets/style.css")
+# 2. Load CSS (Opsional, kalau file assets/style.css ada)
+try:
+    with open("assets/style.css") as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
 
-# 3. SIDEBAR & NAVIGASI
+# 3. Sidebar
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=80)
-    st.markdown("### ⚙️ Control Panel")
-    
-    api_key = st.text_input("🔑 Google API Key", type="password")
+    st.title("🛡️ Secure Ops")
+    st.info("System: **ONLINE**")
     st.markdown("---")
+    st.write("**Model:** LLaMA 3.1 (Local)")
+    st.write("**Mode:** Read-Only Access")
     
-    st.markdown("### 🛠️ Developer Mode")
-    demo_mode = st.toggle("Nyala Mode Demo (Fake AI)", value=False, 
-                          help="Gunakan ini jika API Error untuk keperluan Screenshot.")
-    
-    if st.button("🗑️ Reset Chat"):
+    if st.button("Clear Log"):
         st.session_state.messages = []
         st.rerun()
 
-# 4. HEADER UTAMA
-st.title("🔮 NEXUS: Enterprise SQL Assistant")
+# 4. Header
+st.title(APP_TITLE)
+st.caption("Architecture: Modular Python + Local LLM + SQL Sanitization Layer")
 
-# Metrik Dashboard (Pemanis UI)
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Records", "1,240", "Live")
-col2.metric("API Latency", "45ms", "-12ms")
-col3.metric("System Status", "Optimal", delta_color="normal")
-st.markdown("---")
-
-# 5. LOGIKA CHAT
+# 5. Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "👋 Halo! Nexus Analytics siap. Silakan tanya data penjualan."}
+        {"role": "assistant", "content": "Security System Active. Silakan request data penjualan."}
     ]
 
-# Render History Chat
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "🤖"):
+    with st.chat_message(msg["role"]):
         if msg.get("type") == "dataframe":
-            st.dataframe(msg["content"], use_container_width=True)
+            st.dataframe(msg["content"])
+        elif msg.get("type") == "error":
+            st.error(msg["content"])
         else:
             st.markdown(msg["content"])
 
-# 6. INPUT USER & PROSES
-if prompt := st.chat_input("Contoh: Tampilkan pelanggan dari Jakarta"):
-    
-    # Tampilkan pesan user
+# 6. Logic Utama
+if prompt := st.chat_input("Masukkan perintah query..."):
+    # Tampilkan input user
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Respon Bot
-    with st.chat_message("assistant", avatar="🤖"):
-        message_placeholder = st.empty()
-        
-        # --- JALUR 1: MODE DEMO (UNTUK SCREENSHOT AMAN) ---
-        if demo_mode:
-            with st.spinner("🔄 Simulasi Mode Demo..."):
-                time.sleep(1.5)
-                fake_sql, fake_df = get_demo_response(prompt)
+    with st.chat_message("assistant"):
+        with st.spinner("🔒 Verifying protocol & Generating SQL..."):
+            
+            # STEP A: Generate SQL (AI Layer)
+            sql_query = get_sql_from_llama(prompt)
+            
+            if "ERROR" in sql_query:
+                st.error(sql_query)
+            else:
+                # Tampilkan Code SQL (Transparansi)
+                st.code(sql_query, language="sql")
+                st.session_state.messages.append({"role": "assistant", "content": f"```sql\n{sql_query}\n```"})
                 
-                message_placeholder.markdown(f"**Generated SQL (Demo):**\n```sql\n{fake_sql}\n```")
-                st.dataframe(fake_df, use_container_width=True)
+                # STEP B: Execute SQL (Database Layer with Security)
+                df_result, err_msg = run_query(sql_query)
                 
-                st.session_state.messages.append({"role": "assistant", "content": f"**Generated SQL:**\n```sql\n{fake_sql}\n```"})
-                st.session_state.messages.append({"role": "assistant", "content": fake_df, "type": "dataframe"})
-
-        # --- JALUR 2: MODE ASLI (AI + DB NYATA) ---
-        else:
-            if not api_key:
-                st.error("⚠️ API Key belum dimasukkan!")
-                st.stop()
-                
-            with st.spinner("📡 Menghubungi AI..."):
-                generated_sql = get_sql_from_ai(prompt, api_key)
-                
-                if generated_sql.startswith("ERROR"):
-                    st.error(generated_sql)
-                elif "SELECT" not in generated_sql.upper():
-                    st.markdown(generated_sql)
-                    st.session_state.messages.append({"role": "assistant", "content": generated_sql})
-                else:
-                    # Tampilkan SQL
-                    message_placeholder.markdown(f"```sql\n{generated_sql}\n```")
-                    st.session_state.messages.append({"role": "assistant", "content": f"```sql\n{generated_sql}\n```"})
-                    
-                    # Jalankan SQL ke Database
-                    df_result, err = run_query(generated_sql)
-                    
-                    if err:
-                        st.error(f"SQL Error: {err}")
-                    else:
-                        st.dataframe(df_result, use_container_width=True)
-                        st.session_state.messages.append({"role": "assistant", "content": df_result, "type": "dataframe"})
+                if err_msg:
+                    # Jika kena blokir security atau error DB
+                    st.error(err_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": err_msg, "type": "error"})
+                elif df_result is not None:
+                    # Jika sukses
+                    st.success(f"Data Retrieved: {len(df_result)} records.")
+                    st.dataframe(df_result)
+                    st.session_state.messages.append({"role": "assistant", "content": df_result, "type": "dataframe"})
