@@ -15,4 +15,4 @@ Chatbot analisis data berbasis AI yang dirancang dengan arsitektur **Secure & Mo
 - `main.py`: Orchestrator aplikasi (Streamlit).
 
 ## 📸 Screenshots
-[Tempel Screenshot kamu disini]
+<img width="1919" height="976" alt="image" src="https://github.com/user-attachments/assets/2e0a2be3-9426-40c4-bb6e-4749ac0e4e2d" />
