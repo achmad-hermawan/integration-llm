@@ -2,7 +2,6 @@ import streamlit as st
 from modules.config import APP_TITLE
 from modules.llm import get_sql_from_llama
 from modules.database import run_query
-from modules.utils import load_css # Pastikan file utils.py ada (lihat step sebelumnya)
 
 # 1. Setup Halaman
 st.set_page_config(page_title="Nexus Secure", page_icon="🛡️", layout="wide")
